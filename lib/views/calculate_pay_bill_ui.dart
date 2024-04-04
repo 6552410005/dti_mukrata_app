@@ -1,8 +1,13 @@
-// ignore_for_file: prefer_const_constructors, prefer_final_fields, sort_child_properties_last
+// ignore_for_file: prefer_const_constructors, sized_box_for_whitespace, prefer_final_fields, sort_child_properties_last
 
-import "package:flutter/material.dart";
-import "package:flutter/services.dart";
-import "package:font_awesome_flutter/font_awesome_flutter.dart";
+import 'dart:ffi';
+import 'dart:io';
+
+import 'package:dti_mukrata_app/views/show_pay_bill_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+//import 'package:sau_mukratha_app/views/show_pay_bill_ui.dart';
 
 class CalculatePayBillUI extends StatefulWidget {
   const CalculatePayBillUI({super.key});
@@ -12,492 +17,476 @@ class CalculatePayBillUI extends StatefulWidget {
 }
 
 class _CalculatePayBillUIState extends State<CalculatePayBillUI> {
-  List<String> _mList = [
+  String _memberTypeSelected = 'ไม่เป็นสมาชิก';
+
+  List<String> _memberType = [
     'ไม่เป็นสมาชิก',
     'สมาชิก Silver Member ลด 5%',
     'สมาชิก Gold Member ลด 10%',
     'สมาชิก Platinum Member ลด 20%',
   ];
-  String _member = 'ไม่เป็นสมาชิก';
 
-  int pl = 1;
-  String fd = 'นํ้าดื่ม';
-  bool? adultStatus = false;
-  bool? kidStatus = false;
-  bool? waterStatus = false;
-  TextEditingController adultCtrl = TextEditingController(text: '');
-  TextEditingController kidCtrl = TextEditingController(text: '');
-  TextEditingController cokeCtrl = TextEditingController(text: '');
-  TextEditingController waterCtrl = TextEditingController(text: '');
+  File? _imageFromCamera;
+  Future getImageFromCamera() async {
+    final image = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      preferredCameraDevice: CameraDevice.rear,
+    );
+//ตรวจว่ามีรูปจากการถ่ายหรือยัง
+    if (image == null) return;
 
-  FocusNode focusNode = FocusNode();
-  String hintText = '0';
-  @override
-  void initState() {
-    super.initState();
-    focusNode.addListener(() {
-      if (focusNode.hasFocus) {
-        hintText = '';
-      } else {
-        hintText = '0';
-      }
-      setState(() {});
+    setState(() {
+      _imageFromCamera = File(image.path);
     });
   }
+
+  //สร้างเมธอดแสดง WarningMessage
+  showWarningMessage(context, msg) async {
+    await showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'คำเตือน',
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          msg,
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text(
+              'ตกลง',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepOrange,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+//ตัวแปรเก็บสถานะผู้ใหญ่
+  bool _adultStatus = false;
+  bool _teenStatus = false;
+
+  TextEditingController _adultCtrl = new TextEditingController(text: '0');
+  TextEditingController _teenCtrl = new TextEditingController(text: '0');
+  TextEditingController _cokeCtrl = new TextEditingController(text: '0');
+  TextEditingController _plainCtrl = new TextEditingController(text: '0');
+
+  // Group radio
+  bool _waterSelected = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Center(
-          child: Column(
-            children: [
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.003,
-              ),
-              ClipRRect(
-                child: Image.asset(
-                  'assets/images/camera.jpg',
-                  width: MediaQuery.of(context).size.width * 0.65,
-                  fit: BoxFit.cover,
+      /*
+      appBar: AppBar(
+        backgroundColor: Colors.deepOrange,
+        title: Text(
+          'คิดเงิน',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      */
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.of(context).size.width * 0.085,
+              vertical: MediaQuery.of(context).size.height * 0.05,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    getImageFromCamera();
+                  },
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: _imageFromCamera == null
+                        ? Image.asset(
+                            'assets/images/camera.jpg',
+                            width: MediaQuery.of(context).size.width * 0.35,
+                          )
+                        : Image.file(
+                            _imageFromCamera!,
+                            width: MediaQuery.of(context).size.width * 0.35,
+                            height: MediaQuery.of(context).size.height * 0.35,
+                            fit: BoxFit.cover,
+                          ),
+                  ),
                 ),
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.02,
-              ),
-              Padding(
-                padding: EdgeInsets.only(
-                    right: MediaQuery.of(context).size.width * 0.6),
-                child: Text(
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.05,
+                ),
+                Text(
                   'จำนวนคน',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: MediaQuery.of(context).size.height * 0.025,
+                    fontSize: MediaQuery.of(context).size.height * 0.02,
                   ),
                 ),
-              ),
-              Row(
-                children: [
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.12,
-                  ),
-                  Checkbox(
-                    onChanged: (param) {
-                      setState(() {
-                        adultStatus = param;
-                        adultCtrl.text = '';
-                      });
-                    },
-                    value: adultStatus,
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 2.5),
-                    child: Text(
-                      'ผู้ใหญ่ 299 บาท/คน จำนวน',
-                      style: TextStyle(
-                        fontWeight: FontWeight.normal,
-                        fontSize: MediaQuery.of(context).size.height * 0.018,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.02,
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Padding(
-                      padding: EdgeInsets.only(bottom: 3, right: 25, left: 15),
-                      child: TextField(
-                        controller: adultCtrl,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^[0-9]+.?[0-9]*'),
-                          ),
-                        ],
-                        enabled: adultStatus,
-                        textAlign: TextAlign.center,
-                        //focusNode: focusNode,
-                        decoration: InputDecoration(
-                          border: UnderlineInputBorder(),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          hintText: hintText,
-                          hintStyle: TextStyle(
-                            fontSize:
-                                MediaQuery.of(context).size.height * 0.020,
-                            color: Colors.grey,
-                          ),
-                          suffixIcon: Padding(
-                            padding: EdgeInsets.only(left: 25, top: 12),
-                            child: Text(
-                              'คน',
-                              style: TextStyle(
-                                fontSize:
-                                    MediaQuery.of(context).size.height * 0.020,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.12,
-                  ),
-                  Checkbox(
-                    onChanged: (param) {
-                      setState(() {
-                        kidStatus = param;
-                        kidCtrl.text = '';
-                      });
-                    },
-                    value: kidStatus,
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 2.5),
-                    child: Text(
-                      'เด็ก 69 บาท/คน จำนวน',
-                      style: TextStyle(
-                        fontWeight: FontWeight.normal,
-                        fontSize: MediaQuery.of(context).size.height * 0.018,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.02,
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Padding(
-                      padding: EdgeInsets.only(bottom: 3, right: 25, left: 15),
-                      child: TextField(
-                        controller: kidCtrl,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^[0-9]+.?[0-9]*'),
-                          ),
-                        ],
-                        enabled: kidStatus,
-                        textAlign: TextAlign.center,
-                        //focusNode: focusNode,
-                        decoration: InputDecoration(
-                          border: UnderlineInputBorder(),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          hintText: hintText,
-                          hintStyle: TextStyle(
-                            fontSize:
-                                MediaQuery.of(context).size.height * 0.020,
-                            color: Colors.grey,
-                          ),
-                          suffixIcon: Padding(
-                            padding: EdgeInsets.only(left: 25, top: 12),
-                            child: Text(
-                              'คน',
-                              style: TextStyle(
-                                fontSize:
-                                    MediaQuery.of(context).size.height * 0.020,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.02,
-              ),
-              Padding(
-                padding: EdgeInsets.only(
-                    right: MediaQuery.of(context).size.width * 0.50),
-                child: Text(
-                  'บุปเฟต์นํ้าดื่ม',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: MediaQuery.of(context).size.height * 0.025,
-                  ),
-                ),
-              ),
-              Column(
-                children: [
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.125,
-                      ),
-                      Row(
-                        children: [
-                          Radio(
-                            value: 'รับ',
-                            groupValue: fd,
-                            onChanged: (paramValue) {
-                              setState(() {
-                                fd = paramValue!;
-                                waterStatus = false;
-                                cokeCtrl.text = '';
-                                waterCtrl.text = '';
-                              });
-                            },
-                          ),
-                          Text(
-                            'รับ 25 บาท/หัว',
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.125,
-                      ),
-                      Radio(
-                        value: 'ไม่รับ',
-                        groupValue: fd,
-                        onChanged: (paramValue) {
-                          setState(() {
-                            fd = paramValue!;
-                            waterStatus = true;
-                          });
-                        },
-                      ),
-                      Text(
-                        'ไม่รับ',
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      SizedBox(width: MediaQuery.of(context).size.width * 0.25),
-                      Padding(
-                        padding: EdgeInsets.only(bottom: 2.5),
-                        child: Text(
-                          'โค้ก 20 บาท/ขวด จำนวน',
-                          style: TextStyle(
-                            fontWeight: FontWeight.normal,
-                            fontSize:
-                                MediaQuery.of(context).size.height * 0.018,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.02,
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Padding(
-                          padding:
-                              EdgeInsets.only(bottom: 3, right: 25, left: 15),
-                          child: TextField(
-                            controller: cokeCtrl,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'^[0-9]+.?[0-9]*'),
-                              ),
-                            ],
-                            enabled: waterStatus,
-                            textAlign: TextAlign.center,
-                            //focusNode: focusNode,
-                            decoration: InputDecoration(
-                              border: UnderlineInputBorder(),
-                              hintText: hintText,
-                              hintStyle: TextStyle(
-                                fontSize:
-                                    MediaQuery.of(context).size.height * 0.020,
-                                color: Colors.grey,
-                              ),
-                              suffixIcon: Padding(
-                                padding: EdgeInsets.only(left: 25, top: 12),
-                                child: Text(
-                                  'ขวด',
-                                  style: TextStyle(
-                                    fontSize:
-                                        MediaQuery.of(context).size.height *
-                                            0.020,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      SizedBox(width: MediaQuery.of(context).size.width * 0.25),
-                      Padding(
-                        padding: EdgeInsets.only(bottom: 2.5),
-                        child: Text(
-                          'นํ้าเปล่า 15 บาท/ขวด จำนวน',
-                          style: TextStyle(
-                            fontWeight: FontWeight.normal,
-                            fontSize:
-                                MediaQuery.of(context).size.height * 0.018,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.02,
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Padding(
-                          padding:
-                              EdgeInsets.only(bottom: 3, right: 25, left: 15),
-                          child: TextField(
-                            controller: waterCtrl,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'^[0-9]+.?[0-9]*'),
-                              ),
-                            ],
-                            enabled: waterStatus,
-                            textAlign: TextAlign.center,
-                            //focusNode: focusNode,
-                            decoration: InputDecoration(
-                              border: UnderlineInputBorder(),
-                              hintText: hintText,
-                              hintStyle: TextStyle(
-                                fontSize:
-                                    MediaQuery.of(context).size.height * 0.020,
-                                color: Colors.grey,
-                              ),
-                              suffixIcon: Padding(
-                                padding: EdgeInsets.only(left: 25, top: 12),
-                                child: Text(
-                                  'ขวด',
-                                  style: TextStyle(
-                                    fontSize:
-                                        MediaQuery.of(context).size.height *
-                                            0.020,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.02,
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(
-                        right: MediaQuery.of(context).size.width * 0.45),
-                    child: Text(
-                      'ประเภทสมาชิก',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: MediaQuery.of(context).size.height * 0.025,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: 45,
-                      right: 45,
-                    ),
-                    child: DropdownButton(
-                      value: _member,
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _adultStatus,
                       onChanged: (paramValue) {
                         setState(() {
-                          _member = paramValue!;
+                          if (paramValue == false) {
+                            _adultCtrl.text = '0';
+                          }
+                          _adultStatus = paramValue!;
                         });
                       },
-                      items: _mList
-                          .map((e) => DropdownMenuItem(
-                                value: e,
-                                child: Row(
-                                  children: [
-                                    Text(e),
-                                  ],
-                                ),
-                              ))
-                          .toList(),
-                      isExpanded: true,
                     ),
-                  ),
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.02,
-                  ),
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.1,
-                      ),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {},
-                          icon: Icon(
-                            FontAwesomeIcons.moneyBill1Wave,
-                            color: Colors.white,
+                    Text(
+                      'ผู้ใหญ่ 299 บาท/คน จำนวน  ',
+                    ),
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.15,
+                      child: TextField(
+                        controller: _adultCtrl,
+                        enabled: _adultStatus,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        maxLength: 3,
+                        decoration: InputDecoration(
+                          suffix: Text(
+                            'คน',
                           ),
-                          label: Text(
-                            'คำนวณเงิน',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                            ),
-                            backgroundColor: Colors.deepOrange,
-                            fixedSize: Size.fromHeight(
-                              50.0,
-                            ),
-                          ),
+                          counter: Offstage(),
                         ),
                       ),
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.02,
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _teenStatus,
+                      onChanged: (paramValue) {
+                        setState(() {
+                          if (paramValue == false) {
+                            _teenCtrl.text = '0';
+                          }
+                          _teenStatus = paramValue!;
+                        });
+                      },
+                    ),
+                    Text(
+                      'เด็ก 69 บาท/คน จำนวน  ',
+                    ),
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.15,
+                      child: TextField(
+                        controller: _teenCtrl,
+                        enabled: _teenStatus,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        maxLength: 3,
+                        decoration: InputDecoration(
+                          suffix: Text(
+                            'คน',
+                          ),
+                          counter: Offstage(),
+                        ),
                       ),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            setState(() {});
-                          },
-                          icon: Icon(
-                            Icons.cancel,
-                            color: Colors.white,
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.015,
+                ),
+                Text(
+                  'บุปเฟต์น้ำดื่ม',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: MediaQuery.of(context).size.height * 0.02,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Radio(
+                      value: true,
+                      groupValue: _waterSelected,
+                      onChanged: (paramValue) {
+                        setState(() {
+                          _waterSelected = paramValue!;
+                          _cokeCtrl.text = '0';
+                          _plainCtrl.text = '0';
+                        });
+                      },
+                    ),
+                    Text(
+                      'รับ 25 บาท/หัว',
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Radio(
+                      value: false,
+                      groupValue: _waterSelected,
+                      onChanged: (paramValue) {
+                        setState(() {
+                          _waterSelected = paramValue!;
+                        });
+                      },
+                    ),
+                    Text(
+                      'ไม่รับ',
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.1,
+                    ),
+                    Text(
+                      '  โค้ก 20 บาท/ขวด จำนวน  ',
+                    ),
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.15,
+                      child: TextField(
+                        controller: _cokeCtrl,
+                        enabled: !_waterSelected,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        maxLength: 3,
+                        decoration: InputDecoration(
+                          suffix: Text(
+                            'ขวด',
                           ),
-                          label: Text(
-                            'ยกเลิก',
-                            style: TextStyle(color: Colors.white),
+                          counter: Offstage(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.1,
+                    ),
+                    Text(
+                      '  น้ำเปล่า 15 บาท/ขวด จำนวน  ',
+                    ),
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.15,
+                      child: TextField(
+                        controller: _plainCtrl,
+                        enabled: !_waterSelected,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        maxLength: 3,
+                        decoration: InputDecoration(
+                          suffix: Text(
+                            'ขวด',
                           ),
-                          style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10.0),
+                          counter: Offstage(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.015,
+                ),
+                Text(
+                  'ประเภทสมาชิก',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: MediaQuery.of(context).size.height * 0.02,
+                  ),
+                ),
+                DropdownButton(
+                  value: _memberTypeSelected,
+                  isExpanded: true,
+                  onChanged: (paramValue) {
+                    setState(() {
+                      _memberTypeSelected = paramValue!;
+                    });
+                  },
+                  items: _memberType
+                      .map((e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              e,
+                              style: TextStyle(
+                                fontSize:
+                                    MediaQuery.of(context).size.width * 0.033,
                               ),
-                              backgroundColor: Color.fromARGB(255, 43, 39, 39),
-                              fixedSize: Size.fromHeight(
-                                55.0,
-                              )),
+                            ),
+                          ))
+                      .toList(),
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.035,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          //Validate data
+                          if (_imageFromCamera == null) {
+                            showWarningMessage(context, 'ถ่ายรูปด้วย');
+                            return;
+                          } else if (_adultStatus == false &&
+                              _teenStatus == false) {
+                            showWarningMessage(
+                                context, 'เลือกผู้ใหญ่และหรือเด็กที่มากินด้วย');
+                            return;
+                          } else if (_adultStatus == true &&
+                                  _adultCtrl.text == '0' ||
+                              _adultCtrl.text.trim().length == 0) {
+                            showWarningMessage(
+                                context, 'ตรวจสอบจำนวนผู้ใหญ่ด้วย');
+                            return;
+                          } else if (_teenStatus == true &&
+                                  _teenCtrl.text == '0' ||
+                              _teenCtrl.text.trim().length == 0) {
+                            showWarningMessage(context, 'ตรวจสอบจำนวนเด็กด้วย');
+                            return;
+                          }
+                          //เริ่มคำนวณ
+                          int adultNum = int.parse(_adultCtrl.text);
+                          int teenNum = int.parse(_teenCtrl.text);
+                          int cokeNum = int.parse(_cokeCtrl.text);
+                          int plainNum = int.parse(_plainCtrl.text);
+
+                          //เก็บเงินที่คำนวณได้
+                          double payBill = 0,
+                              adultBuffet = 299,
+                              teenBuffet = 69,
+                              cokePrice = 20,
+                              plainPrice = 15,
+                              silverMember = 5 / 100,
+                              goldMember = 10 / 100,
+                              platinumMember = 20 / 100,
+                              waterBuffet = _waterSelected == true
+                                  ? (adultNum + teenNum) * 25
+                                  : 0;
+                          //ยังไม่คิดส่วนลด
+                          payBill = (adultNum * adultBuffet) +
+                              (teenNum * teenBuffet) +
+                              waterBuffet +
+                              (cokeNum * cokePrice) +
+                              (plainNum * plainPrice);
+                          if (_memberTypeSelected == 'ไม่เป็นสมาชิก') {
+                            payBill = payBill;
+                          } else if (_memberTypeSelected ==
+                              'สมาชิก Silver Member ลด 5%') {
+                            payBill = payBill * silverMember;
+                          } else if (_memberTypeSelected ==
+                              'สมาชิก Gold Member ลด 10%') {
+                            payBill = payBill * goldMember;
+                          } else {
+                            payBill = payBill * platinumMember;
+                          }
+                          //ส่งผลการคำนวณไปหน้า showPayBillUI() show_pay_bill_ui.dart
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ShowPayBillUI(
+                                imageFromCamera: _imageFromCamera,
+                                adult: _adultCtrl.text,
+                                teen: _teenCtrl.text,
+                                waterSelected: _waterSelected == true? 'รับ': 'ไม่รับ',
+                                memberType: _memberTypeSelected,
+                                payBill: payBill.toStringAsFixed(2),
+                                coke: _cokeCtrl.text,
+                                plain: _plainCtrl.text,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: Icon(
+                          FontAwesomeIcons.moneyBill1Wave,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          'คำนวณเงิน',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepOrange,
+                          padding: EdgeInsets.symmetric(
+                            vertical: 12.0,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
                         ),
                       ),
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.1,
+                    ),
+                    SizedBox(
+                      width: 20.0,
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _imageFromCamera = null;
+                            _adultStatus = false;
+                            _adultCtrl.text = '0';
+                            _teenStatus = false;
+                            _teenCtrl.text = '0';
+                            _waterSelected = true;
+                            _cokeCtrl.text = '0';
+                            _plainCtrl.text = '0';
+                            _memberTypeSelected = 'ไม่เป็นสมาชิก';
+                          });
+                        },
+                        icon: Icon(
+                          FontAwesomeIcons.moneyBill1Wave,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          'ยกเลิก',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[800],
+                          padding: EdgeInsets.symmetric(
+                            vertical: 12.0,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.08,
-                  ),
-                ],
-              ),
-            ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
