@@ -1,16 +1,23 @@
-# dti_mukrata_app
+# dti_mukrata_app DTI-หมูกระทะ
 
-A new Flutter project.
+Created By : Kanchai Singkhot DTI-SAU
 
-## Getting Started
+## HomeUI
 
-This project is a starting point for a Flutter application.
+<!-- ![HomeUI](https://github.com/6552410005/dti_mukrata_app/assets/113956880/36b1b208-dd1f-454b-a350-328c4e0dfb63) -->
+<img src="https://github.com/6552410005/dti_mukrata_app/assets/113956880/36b1b208-dd1f-454b-a350-328c4e0dfb63)" width="150px">
 
-A few resources to get you started if this is your first Flutter project:
+<br>
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## CalculateUI
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+<!-- ![CalculateUI](https://github.com/6552410005/dti_mukrata_app/assets/113956880/66232afa-1cc4-47cf-adbb-4023ddb0f8ea) -->
+<img src="https://github.com/6552410005/dti_mukrata_app/assets/113956880/66232afa-1cc4-47cf-adbb-4023ddb0f8ea" width="150px">
+
+<br>
+
+## AboutUI
+
+<!-- ![AboutUI](https://github.com/6552410005/dti_mukrata_app/assets/113956880/7ef18c91-5cfb-4000-970a-fa93d3202494) -->
+<img src="https://github.com/6552410005/dti_mukrata_app/assets/113956880/7ef18c91-5cfb-4000-970a-fa93d3202494" width="150px">
+
